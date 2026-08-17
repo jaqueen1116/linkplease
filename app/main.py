@@ -80,10 +80,11 @@ async def webhook_endpoint(
     - Returns HTTP 200 within 5 seconds
     """
     raw_body = await request.body()
+    logger.info(f"Webhook received! Headers: {dict(request.headers)}, Raw Body: {raw_body[:200]}")
     
     # Signature Verification
     if not verify_signature(raw_body, x_pseudogram_signature):
-        logger.warning("Invalid webhook signature received.")
+        logger.warning(f"Invalid webhook signature received. Header: {x_pseudogram_signature}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid signature signature verification failed"
@@ -91,7 +92,8 @@ async def webhook_endpoint(
         
     try:
         payload = json.loads(raw_body.decode("utf-8"))
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON decode error: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload")
 
     data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
@@ -99,6 +101,7 @@ async def webhook_endpoint(
     event_type = payload.get("event_type") or data.get("event_type", "unknown")
     
     if not event_id:
+        logger.warning(f"Missing event_id in payload: {payload}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing event_id in payload")
         
     # 1. Save event to SQLite (returns False if event_id is duplicate)
