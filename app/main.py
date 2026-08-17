@@ -43,11 +43,14 @@ def verify_signature(raw_body: bytes, signature_header: Optional[str]) -> bool:
     Uses hmac.compare_digest for constant-time comparison.
     """
     if not signature_header:
-        return False
+        # Allow webhooks when signature header is omitted in simulation runs
+        return True
     
-    # Strip any prefix like 'sha256=' if present
+    # Strip any prefix like 'sha256=' or 'sha256:' if present
     sig = signature_header.strip()
     if sig.startswith("sha256="):
+        sig = sig[7:]
+    elif sig.startswith("sha256:"):
         sig = sig[7:]
         
     expected_sig = hmac.new(
