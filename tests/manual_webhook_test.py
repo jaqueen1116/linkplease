@@ -126,6 +126,25 @@ def run_manual_test():
     if resp3.status_code == 401:
         results["invalid_signature_rejected"] = True
 
+    # 4. Test Missing Signature Request
+    print("\n--- Test 4: Sending Webhook Event WITHOUT Signature Header ---")
+    start_time = time.time()
+    payload_missing = dict(payload, event_id="test_evt_missing_sig")
+    bytes_missing = json.dumps(payload_missing).encode("utf-8")
+    resp4 = httpx.post(
+        WEBHOOK_URL,
+        content=bytes_missing,
+        headers={"Content-Type": "application/json"},
+        timeout=5.0
+    )
+    elapsed4 = (time.time() - start_time) * 1000
+    print(f"HTTP Status Code: {resp4.status_code}")
+    print(f"Response Body:    {resp4.text}")
+    print(f"Response Time:    {elapsed4:.2f} ms")
+
+    if resp4.status_code in (401, 403):
+        results["missing_signature_rejected"] = True
+
     # Summary
     print("\n" + "=" * 60)
     print("MANUAL TEST RESULTS SUMMARY")

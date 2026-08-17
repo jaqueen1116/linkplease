@@ -41,10 +41,10 @@ def verify_signature(raw_body: bytes, signature_header: Optional[str]) -> bool:
     """
     Verifies X-PseudoGram-Signature header using HMAC-SHA256 with the raw request body and API key.
     Uses hmac.compare_digest for constant-time comparison.
+    Rejects missing or invalid signature headers.
     """
     if not signature_header:
-        # Allow webhooks when signature header is omitted in simulation runs
-        return True
+        return False
     
     # Strip any prefix like 'sha256=' or 'sha256:' if present
     sig = signature_header.strip()
